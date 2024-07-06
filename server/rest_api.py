@@ -32,6 +32,8 @@ def test_disconnect():
 show_camera = False
 picam2 = None
 frame_queue = queue.Queue()
+camera_thread = None
+stop_camera_thread_event = threading.Event()
 
 # Initialize Pygame mixer with optimized settings
 pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=4096)
@@ -57,7 +59,7 @@ def initialize_camera():
             picam2 = None
 
 def generate_camera_frames():
-    while True:
+    while not stop_camera_thread_event.is_set():
         if not frame_queue.empty():
             frame = frame_queue.get()
             bgr_frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
@@ -83,6 +85,7 @@ def generate_camera_frames():
                 print("Failed to capture frame")
                 continue
             frame_queue.put(frame)
+    print("Camera feed thread stopped")
 
 @app.route('/api/data')
 def get_data():
@@ -92,14 +95,23 @@ def get_data():
 @app.route('/api/show-camera', methods=['POST'])
 def toggle_camera():
     initialize_camera()
-    global show_camera
+    global show_camera, camera_thread, stop_camera_thread_event
     show_camera = True
+    if camera_thread is None or not camera_thread.is_alive():
+        stop_camera_thread_event.clear()
+        camera_thread = threading.Thread(target=generate_camera_frames)
+        camera_thread.daemon = True
+        camera_thread.start()
     return jsonify({'success': True})
 
 @app.route('/api/turn-off-camera', methods=['POST'])
 def turn_off_camera():
-    global show_camera
+    global show_camera, stop_camera_thread_event, camera_thread
     show_camera = False
+    stop_camera_thread_event.set()
+    if camera_thread is not None:
+        camera_thread.join()
+        camera_thread = None
     return jsonify({'success': True})
 
 @app.route('/api/camera-feed')
@@ -234,7 +246,6 @@ def delete_song():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
 
-
 @app.route('/api/rename-song', methods=['POST'])
 def rename_song():
     data = request.json
@@ -301,11 +312,5 @@ def stop_audio_detection():
     stop_audio_thread.set()
     return jsonify({'success': True, 'message': 'Audio detection stopped'})
 
-def start_camera_thread():
-    camera_thread = threading.Thread(target=generate_camera_frames)
-    camera_thread.daemon = True
-    camera_thread.start()
-
 if __name__ == '__main__':
-    start_camera_thread()
     app.run(host='0.0.0.0', port=5000, debug=True)
