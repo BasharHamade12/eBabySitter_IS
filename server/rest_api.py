@@ -129,7 +129,6 @@ def play_song():
 def stop_song():
     pygame.mixer.music.stop()
     return jsonify({'success': True})
-    return jsonify({'success': True})
 
 # Upload folder configuration
 UPLOAD_FOLDER = './server/sounds'
@@ -263,7 +262,6 @@ def detect_audio():
     FORMAT = pyaudio.paInt16
     CHANNELS = 1
     RATE = 44100
-    THRESHOLD = 500  # Adjust this threshold based on your microphone sensitivity
 
     audio = pyaudio.PyAudio()
     stream = audio.open(format=FORMAT, channels=CHANNELS,
@@ -275,8 +273,9 @@ def detect_audio():
     while True:
         data = stream.read(CHUNK, exception_on_overflow=False)
         audio_data = np.frombuffer(data, dtype=np.int16)
-        if np.abs(audio_data).mean() > THRESHOLD:
-            print("Audio detected!")
+        rms = np.sqrt(np.mean(audio_data**2))
+        db = 20 * np.log10(rms) if rms > 0 else 0
+        print(f"Audio level: {db:.2f} dB")
 
 def start_camera_thread():
     camera_thread = threading.Thread(target=generate_camera_frames)
