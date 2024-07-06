@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Image, StyleSheet, Button, Picker, Text, TextInput } from 'react-native';
+import { View, Image, StyleSheet, Button, Picker, Text, TextInput, Alert } from 'react-native';
 import { Provider as PaperProvider, Appbar, Card } from 'react-native-paper';
-import io from 'socket.io-client'; 
 import AudioUpload from './AudioUpload';
 import GenerateAndUpload from './GenerateAndUpload';
 
@@ -12,6 +11,8 @@ const App = () => {
   const [songs, setSongs] = useState([]);
   const [selectedSong, setSelectedSong] = useState('');
   const [newSongName, setNewSongName] = useState('');
+  const [faceStatus, setFaceStatus] = useState(true);
+  const [faceStatusStart, setFaceStatusStart] = useState(null);
   const socket = useRef(null);
 
   useEffect(() => {
@@ -25,6 +26,18 @@ const App = () => {
           }
           const data = await response.json();
           console.log('Face Status:', data);
+  
+          if (data === false) {
+            if (faceStatus) {
+              setFaceStatusStart(Date.now());
+            }
+            if (Date.now() - faceStatusStart >= 30000) {
+              sendEmailAlert();
+            }
+          } else {
+            setFaceStatusStart(null);
+          }
+          setFaceStatus(data);
         } catch (error) {
           console.error('Error fetching face status:', error);
         }
@@ -33,7 +46,7 @@ const App = () => {
     };
     fetchData();
     return () => {};
-  }, []);
+  }, [faceStatus, faceStatusStart]);  
 
   const fetchSongs = async () => {
     try {
@@ -48,6 +61,30 @@ const App = () => {
       console.error('Error fetching songs:', error);
     }
   };
+
+  const sendEmailAlert = async () => {
+    try {
+      const userEmail = localStorage.getItem('userEmail');
+      const response = await fetch('http://localhost:3000/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: userEmail,
+          subject: 'Alert: Baby Not Detected',
+          text: 'The baby has not been detected for 30 seconds.',
+        }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to send email');
+      }
+      Alert.alert('Email Alert Sent', 'An email alert has been sent to the user.');
+    } catch (error) {
+      console.error('Error sending email:', error);
+    }
+  };
+  
 
   useEffect(() => {
     if (audioChunks.length > 0 && audioContext) {
