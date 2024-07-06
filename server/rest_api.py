@@ -66,7 +66,6 @@ def generate_camera_frames():
             faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
             print(f"Detected {len(faces)} faces")
             if len(faces) == 0:
-                print('sending post request')
                 requests.post(NODE_SERVER_URL + 'update-face-status', json={'face_found': False})
             
             for (x, y, w, h) in faces:
