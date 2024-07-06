@@ -6,18 +6,16 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-let face_found = true; // Initialize face_found variable
+let face_found = true;
 
 app.get('/api/face-status', (req, res) => {
-    res.json(face_found); // Return the current state of face_found
+    res.json(face_found);
 });
 
 app.post('/update-face-status', (req, res) => {  
-    console.log(`post req`);
     const { face_found: newFaceFound } = req.body;
     
-    face_found = newFaceFound; // Update face_found based on the request
-    console.log(`Updated face_found to: ${face_found}`);
+    face_found = newFaceFound;
     res.json({ message: `Face status updated to ${face_found}` });
 });
 
