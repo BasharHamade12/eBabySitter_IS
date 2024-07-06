@@ -65,8 +65,11 @@ def generate_camera_frames():
             gray = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2GRAY)
             faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
             print(f"Detected {len(faces)} faces")
+
             if len(faces) == 0:
                 requests.post(NODE_SERVER_URL + 'update-face-status', json={'face_found': False})
+            else:
+                requests.post(NODE_SERVER_URL + 'update-face-status', json={'face_found': True})
             
             for (x, y, w, h) in faces:
                 cv2.rectangle(bgr_frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
