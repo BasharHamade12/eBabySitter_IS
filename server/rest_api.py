@@ -11,12 +11,11 @@ import threading
 import random
 import string
 from werkzeug.utils import secure_filename
-import threading
 import queue
-import time
 import numpy as np
 from routes.auth import auth_blueprint 
 import requests
+import pyaudio
 
 app = Flask(__name__)
 CORS(app)
@@ -259,6 +258,26 @@ def rename_song():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
 
+def detect_audio():
+    CHUNK = 1024
+    FORMAT = pyaudio.paInt16
+    CHANNELS = 1
+    RATE = 44100
+    THRESHOLD = 500  # Adjust this threshold based on your microphone sensitivity
+
+    audio = pyaudio.PyAudio()
+    stream = audio.open(format=FORMAT, channels=CHANNELS,
+                        rate=RATE, input=True,
+                        frames_per_buffer=CHUNK)
+
+    print("Listening for audio...")
+
+    while True:
+        data = stream.read(CHUNK, exception_on_overflow=False)
+        audio_data = np.frombuffer(data, dtype=np.int16)
+        if np.abs(audio_data).mean() > THRESHOLD:
+            print("Audio detected!")
+
 def start_camera_thread():
     camera_thread = threading.Thread(target=generate_camera_frames)
     camera_thread.daemon = True
@@ -266,4 +285,7 @@ def start_camera_thread():
 
 if __name__ == '__main__':
     start_camera_thread()
-    app.run( host='0.0.0.0', port=5000,debug=True)
+    audio_thread = threading.Thread(target=detect_audio)
+    audio_thread.daemon = True
+    audio_thread.start()
+    app.run(host='0.0.0.0', port=5000, debug=True)
