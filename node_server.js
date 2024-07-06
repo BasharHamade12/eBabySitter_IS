@@ -8,7 +8,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-let face_found = false;
+let face_found = true;
 let lastEmailSentTime = 0;
 
 app.get('/api/face-status', (req, res) => {
