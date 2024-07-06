@@ -12,7 +12,7 @@ const App = () => {
   const [selectedSong, setSelectedSong] = useState('');
   const [newSongName, setNewSongName] = useState('');
   const [faceStatus, setFaceStatus] = useState(true);
-  const [faceStatusStart, setFaceStatusStart] = useState(null);
+  const timeoutRef = useRef(null);
   const socket = useRef(null);
 
   useEffect(() => {
@@ -26,16 +26,18 @@ const App = () => {
           }
           const data = await response.json();
           console.log('Face Status:', data);
-  
+
           if (data === false) {
-            if (faceStatus) {
-              setFaceStatusStart(Date.now());
-            }
-            if (Date.now() - faceStatusStart >= 30000) {
-              sendEmailAlert();
+            if (!timeoutRef.current) {
+              timeoutRef.current = setTimeout(() => {
+                sendEmailAlert();
+              }, 60000);
             }
           } else {
-            setFaceStatusStart(null);
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+              timeoutRef.current = null;
+            }
           }
           setFaceStatus(data);
         } catch (error) {
@@ -46,7 +48,7 @@ const App = () => {
     };
     fetchData();
     return () => {};
-  }, [faceStatus, faceStatusStart]);  
+  }, [faceStatus]);
 
   const fetchSongs = async () => {
     try {
@@ -84,7 +86,6 @@ const App = () => {
       console.error('Error sending email:', error);
     }
   };
-  
 
   useEffect(() => {
     if (audioChunks.length > 0 && audioContext) {
@@ -115,7 +116,7 @@ const App = () => {
       });
       if (!response.ok) {
         throw new Error('Network response was not ok');
-      } 
+      }
       console.log("showing camera")
       setShowCamera(true);
     } catch (error) {
@@ -134,7 +135,7 @@ const App = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ song: selectedSong }), 
+        body: JSON.stringify({ song: selectedSong }),
         mode: 'cors'
       });
       console.log(response);
