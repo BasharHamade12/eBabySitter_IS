@@ -202,6 +202,44 @@ const App = () => {
     }
   };
 
+  const startAudioDetection = async () => {
+    try {
+      const response = await fetch('http://192.168.43.173:5000/api/start-audio-detection', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.json();
+      console.log(data.message);
+      Alert.alert('Audio Detection', data.message);
+    } catch (error) {
+      console.error('Error starting audio detection:', error);
+    }
+  };
+
+  const stopAudioDetection = async () => {
+    try {
+      const response = await fetch('http://192.168.43.173:5000/api/stop-audio-detection', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.json();
+      console.log(data.message);
+      Alert.alert('Audio Detection', data.message);
+    } catch (error) {
+      console.error('Error stopping audio detection:', error);
+    }
+  };
+
   return (
     <PaperProvider>
       <View style={styles.container}>
@@ -237,8 +275,12 @@ const App = () => {
           />
           <Button title="Rename Song" onPress={renameSong} />
         </Card>
-        <AudioUpload/>
-        <GenerateAndUpload/>
+        <Card style={styles.card}>
+          <Button title="Start Audio Detection" onPress={startAudioDetection} />
+          <Button title="Stop Audio Detection" onPress={stopAudioDetection} />
+        </Card>
+        <AudioUpload />
+        <GenerateAndUpload />
       </View>
     </PaperProvider>
   );

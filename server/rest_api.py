@@ -129,7 +129,6 @@ def play_song():
 def stop_song():
     pygame.mixer.music.stop()
     return jsonify({'success': True})
-    return jsonify({'success': True})
 
 # Upload folder configuration
 UPLOAD_FOLDER = './server/sounds'
@@ -258,12 +257,15 @@ def rename_song():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
 
+audio_thread = None
+stop_audio_thread = threading.Event()
+
 def detect_audio():
     CHUNK = 1024
     FORMAT = pyaudio.paInt16
     CHANNELS = 1
     RATE = 44100
-    THRESHOLD = 500  # Adjust this threshold based on your microphone sensitivity
+    THRESHOLD = 500
 
     audio = pyaudio.PyAudio()
     stream = audio.open(format=FORMAT, channels=CHANNELS,
@@ -272,11 +274,32 @@ def detect_audio():
 
     print("Listening for audio...")
 
-    while True:
+    while not stop_audio_thread.is_set():
         data = stream.read(CHUNK, exception_on_overflow=False)
         audio_data = np.frombuffer(data, dtype=np.int16)
         if np.abs(audio_data).mean() > THRESHOLD:
             print("Audio detected!")
+
+    stream.stop_stream()
+    stream.close()
+    audio.terminate()
+
+@app.route('/api/start-audio-detection', methods=['POST'])
+def start_audio_detection():
+    global audio_thread, stop_audio_thread
+    if audio_thread is None or not audio_thread.is_alive():
+        stop_audio_thread.clear()
+        audio_thread = threading.Thread(target=detect_audio)
+        audio_thread.start()
+        return jsonify({'success': True, 'message': 'Audio detection started'})
+    else:
+        return jsonify({'success': False, 'message': 'Audio detection is already running'})
+
+@app.route('/api/stop-audio-detection', methods=['POST'])
+def stop_audio_detection():
+    global stop_audio_thread
+    stop_audio_thread.set()
+    return jsonify({'success': True, 'message': 'Audio detection stopped'})
 
 def start_camera_thread():
     camera_thread = threading.Thread(target=generate_camera_frames)
@@ -285,7 +308,4 @@ def start_camera_thread():
 
 if __name__ == '__main__':
     start_camera_thread()
-    audio_thread = threading.Thread(target=detect_audio)
-    audio_thread.daemon = True
-    audio_thread.start()
     app.run(host='0.0.0.0', port=5000, debug=True)
