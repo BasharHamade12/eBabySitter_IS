@@ -117,7 +117,7 @@ def list_songs():
     songs = [song for song in os.listdir(sounds_dir) if song.endswith('.mp3') or song.endswith('.wav')]
     return jsonify({'songs': songs})
 
-@app.route('/api/play-song')
+@app.route('/api/play-song', methods=['POST'])
 def play_song():
     if not songs:
         return jsonify({'success': False, 'message': 'No songs found in sounds directory'})
