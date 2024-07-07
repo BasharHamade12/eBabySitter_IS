@@ -1,16 +1,22 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Image, StyleSheet, Button, Picker, Text, TextInput, TouchableOpacity } from 'react-native';
-import { Provider as PaperProvider, Appbar, Card } from 'react-native-paper';
+import React, { useEffect, useState, useRef, useContext } from 'react';
+import { View, Image, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { Provider as PaperProvider } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useNavigation } from '@react-navigation/native';
+import { AlertContext } from '../AlertContext';
 
 const App = () => {
   const [showCamera, setShowCamera] = useState(false);
   const [audioContext, setAudioContext] = useState(null);
   const [audioChunks, setAudioChunks] = useState([]);
   const [faceStatus, setFaceStatus] = useState(true);
+  const [audioStatus, setAudioStatus] = useState(false);
+  const [audioStartTime, setAudioStartTime] = useState(null);
   const timeoutRef = useRef(null);
   const [dateTime, setDateTime] = useState(new Date());
   const [listenAudio, setListenAudio] = useState(false);
+  const navigation = useNavigation();
+  const { addAlert } = useContext(AlertContext);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -25,18 +31,36 @@ const App = () => {
     const fetchData = async () => {
       const interval = setInterval(async () => {
         try {
-          const response = await fetch('http://localhost:3000/api/face-status');
-          if (!response.ok) {
+          const faceResponse = await fetch('http://localhost:3000/api/face-status');
+          if (!faceResponse.ok) {
             throw new Error('Network response was not ok');
           }
-          const data = await response.json();
-          console.log('Face Status:', data);
-          
-          if (data === false) {
+          const faceData = await faceResponse.json();
+
+          const audioResponse = await fetch('http://localhost:3000/api/audio-status');
+          if (!audioResponse.ok) {
+            throw new Error('Network response was not ok');
+          }
+          const audioData = await audioResponse.json();
+          console.log('Audio Status:', audioData);
+
+          if (audioData === true) {
+            if (!audioStartTime) {
+              setAudioStartTime(Date.now());
+            } else if (Date.now() - audioStartTime > 5000) {
+              sendEmailAlert('Child is crying', 'The Child is crying!');
+              addAlert('Child was crying!');
+            }
+          } else {
+            setAudioStartTime(null);
+          }
+
+          if (faceData === false) {
             if (!timeoutRef.current) {
               timeoutRef.current = setTimeout(() => {
-                sendEmailAlert();
-              }, 60000);
+                sendEmailAlert('Alert: Child Not Detected', 'The Child has not been detected for 30 seconds.');
+                addAlert('Child was not seen on camera!');
+              }, 30000);
             }
           } else {
             if (timeoutRef.current) {
@@ -44,18 +68,20 @@ const App = () => {
               timeoutRef.current = null;
             }
           }
-          setFaceStatus(data);
+
+          setFaceStatus(faceData);
+          setAudioStatus(audioData);
         } catch (error) {
-          console.error('Error fetching face status:', error);
+          console.error('Error fetching status:', error);
         }
       }, 5000);
       return () => clearInterval(interval);
     };
     fetchData();
     return () => {};
-  }, [faceStatus]);
-  
-  const sendEmailAlert = async () => {
+  }, [faceStatus, audioStatus, audioStartTime]);
+
+  const sendEmailAlert = async (subject, text) => {
     try {
       const userEmail = localStorage.getItem('userEmail');
       const response = await fetch('http://localhost:3000/api/send-email', {
@@ -65,8 +91,8 @@ const App = () => {
         },
         body: JSON.stringify({
           to: userEmail,
-          subject: 'Alert: Baby Not Detected',
-          text: 'The baby has not been detected for 30 seconds.',
+          subject,
+          text,
         }),
       });
       if (!response.ok) {
@@ -106,8 +132,8 @@ const App = () => {
       });
       if (!response.ok) {
         throw new Error('Network response was not ok');
-      } 
-      console.log("showing camera")
+      }
+      console.log("showing camera");
       setShowCamera(true);
     } catch (error) {
       console.error('Error turning on camera:', error);
@@ -126,8 +152,7 @@ const App = () => {
         throw new Error('Network response was not ok');
       }
       setShowCamera(false);
-    }
-    catch (error) {
+    } catch (error) {
       console.error('Error turning off camera:', error);
     }
   };

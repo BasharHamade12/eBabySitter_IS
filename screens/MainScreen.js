@@ -1,16 +1,11 @@
-import React, { useState } from 'react';
+// In MainScreen.js
+import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faVideo, faMusic, faCog, faBell } from '@fortawesome/free-solid-svg-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
-function MainScreen({ navigation }) {
-  const [alerts, setAlerts] = useState([
-    { id: '1', message: 'The baby was crying !' },
-    { id: '2', message: 'The baby cannot be seen on screen !' },
-    { id: '3', message: 'The baby was crying !' },
-  ]);
-
+function MainScreen({ navigation, alerts, setAlerts }) {
   return (
     <LinearGradient
       colors={['#5f5c95', '#5f5c95', '#808080']}

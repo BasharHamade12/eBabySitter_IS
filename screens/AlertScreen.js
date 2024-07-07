@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { View, StyleSheet, Text, Image, FlatList } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Card } from 'react-native-paper';
+import { AlertContext } from '../AlertContext';
 
-const AlertScreen = ({ route }) => {
-  const { alerts } = route.params;
+const AlertScreen = () => {
+  const { alerts } = useContext(AlertContext);
 
   const renderItem = ({ item }) => (
     <Card style={styles.card}>

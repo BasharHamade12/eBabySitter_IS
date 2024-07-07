@@ -9,17 +9,27 @@ app.use(bodyParser.json());
 app.use(cors());
 
 let face_found = true;
+let audio_detected = false;
 let lastEmailSentTime = 0;
 
 app.get('/api/face-status', (req, res) => {
     res.json(face_found);
 });
 
-app.post('/update-face-status', (req, res) => {  
+app.post('/update-face-status', (req, res) => {
     const { face_found: newFaceFound } = req.body;
-    
     face_found = newFaceFound;
     res.json({ message: `Face status updated to ${face_found}` });
+});
+
+app.get('/api/audio-status', (req, res) => {
+    res.json(audio_detected);
+});
+
+app.post('/update-audio-status', (req, res) => {
+    const { audio_detected: newAudioDetected } = req.body;
+    audio_detected = newAudioDetected;
+    res.json({ message: `Audio status updated to ${audio_detected}` });
 });
 
 app.post('/api/send-email', async (req, res) => {
@@ -27,6 +37,7 @@ app.post('/api/send-email', async (req, res) => {
     const currentTime = Date.now();
     const cooldownTime = 2 * 60 * 1000;
     face_found = true;
+    audio_detected = false;
 
     if (currentTime - lastEmailSentTime < cooldownTime) {
         return res.status(429).send({ error: 'Email cooldown period has not passed yet. Please wait.' });
