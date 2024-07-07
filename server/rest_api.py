@@ -13,7 +13,7 @@ import string
 from werkzeug.utils import secure_filename
 import queue
 import numpy as np
-from routes.auth import auth_blueprint 
+from routes.auth import auth_blueprint
 import requests
 import pyaudio
 
@@ -71,10 +71,10 @@ def generate_camera_frames():
                 requests.post(NODE_SERVER_URL + 'update-face-status', json={'face_found': False})
             else:
                 requests.post(NODE_SERVER_URL + 'update-face-status', json={'face_found': True})
-            
+
             for (x, y, w, h) in faces:
                 cv2.rectangle(bgr_frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
-            
+
             ret, jpeg = cv2.imencode('.jpg', bgr_frame)
             frame_bytes = jpeg.tobytes()
             yield (b'--frame\r\n'
@@ -270,8 +270,10 @@ def rename_song():
 
 audio_thread = None
 stop_audio_thread = threading.Event()
+audio_detected = False
 
 def detect_audio():
+    global audio_detected
     CHUNK = 1024
     FORMAT = pyaudio.paInt16
     CHANNELS = 1
@@ -290,6 +292,13 @@ def detect_audio():
         audio_data = np.frombuffer(data, dtype=np.int16)
         if np.abs(audio_data).mean() > THRESHOLD:
             print("Audio detected!")
+            if not audio_detected:
+                audio_detected = True
+                requests.post(NODE_SERVER_URL + 'update-audio-status', json={'audio_detected': True})
+        else:
+            if audio_detected:
+                audio_detected = False
+                requests.post(NODE_SERVER_URL + 'update-audio-status', json={'audio_detected': False})
 
     stream.stop_stream()
     stream.close()
