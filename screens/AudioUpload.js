@@ -18,10 +18,10 @@ const AudioFileInput = () => {
     setFileError(null);
   };
 
-  const handleUpload = (file) => {
+  const handleUpload = () => {
     const formData = new FormData();
-    formData.append('file', file);
-  
+    formData.append('file', selectedFile);
+
     fetch('http://localhost:5000/save', {
       method: 'POST',
       body: formData,
@@ -32,6 +32,7 @@ const AudioFileInput = () => {
           console.error(data.error);
         } else {
           console.log(`File uploaded successfully: ${data.filename}`);
+          setSelectedFile(null); // Reset selected file after successful upload
         }
       })
       .catch((error) => {
@@ -40,17 +41,44 @@ const AudioFileInput = () => {
   };
 
   return (
-    <div>
+    <div style={styles.container}>
       <input type="file" onChange={handleFileChange} />
       {selectedFile && (
-        <div>
+        <div style={styles.fileInfo}>
           <p>Selected file: {selectedFile.name}</p>
-          <button onClick={() => handleUpload(selectedFile)}>Upload file</button>
+          <button style={styles.uploadButton} onClick={handleUpload}>Upload file</button>
         </div>
       )}
-      {fileError && <p style={{ color: 'red' }}>{fileError}</p>}
+      {fileError && <p style={styles.errorText}>{fileError}</p>}
     </div>
   );
+};
+
+const styles = {
+  container: {
+    maxWidth: '400px',
+    margin: 'auto',
+    padding: '20px',
+    backgroundColor: '#f0f0f0',
+    borderRadius: '8px',
+    textAlign: 'center',
+  },
+  fileInfo: {
+    marginTop: '20px',
+  },
+  uploadButton: {
+    backgroundColor: '#6a1b9a',
+    color: '#ffffff',
+    border: 'none',
+    padding: '10px 20px',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    marginTop: '10px',
+  },
+  errorText: {
+    color: 'red',
+    marginTop: '10px',
+  },
 };
 
 export default AudioFileInput;

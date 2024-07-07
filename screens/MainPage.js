@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Image, StyleSheet, Button, Picker, Text, TextInput, Alert } from 'react-native';
+import { View, Image, StyleSheet, Button, Picker, Text, TextInput } from 'react-native';
 import { Provider as PaperProvider, Appbar, Card } from 'react-native-paper';
 import AudioUpload from './AudioUpload';
 import GenerateAndUpload from './GenerateAndUpload';
@@ -26,7 +26,7 @@ const App = () => {
           }
           const data = await response.json();
           console.log('Face Status:', data);
-
+          
           if (data === false) {
             if (!timeoutRef.current) {
               timeoutRef.current = setTimeout(() => {
@@ -63,7 +63,7 @@ const App = () => {
       console.error('Error fetching songs:', error);
     }
   };
-
+  
   const sendEmailAlert = async () => {
     try {
       const userEmail = localStorage.getItem('userEmail');
@@ -116,7 +116,7 @@ const App = () => {
       });
       if (!response.ok) {
         throw new Error('Network response was not ok');
-      }
+      } 
       console.log("showing camera")
       setShowCamera(true);
     } catch (error) {
@@ -135,10 +135,9 @@ const App = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ song: selectedSong }),
+        body: JSON.stringify({ song: selectedSong }), 
         mode: 'cors'
       });
-      console.log(response);
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
@@ -202,7 +201,7 @@ const App = () => {
       console.error('Error renaming song:', error);
     }
   };
-
+  
   const startAudioDetection = async () => {
     try {
       const response = await fetch('http://192.168.43.173:5000/api/start-audio-detection', {
@@ -246,7 +245,14 @@ const App = () => {
       <View style={styles.container}>
         <Appbar.Header>
           <Appbar.Content title="eBabySitter" />
-        </Appbar.Header>
+        </Appbar.Header> 
+            <View style={styles.titleContainer}>
+        <Image
+          source={{ uri: 'Capture.png' }} // Replace with your logo URL or local image
+          style={styles.logo}
+        />
+        <Text style={styles.title}>eBabySitter</Text>
+      </View>
         <Card style={styles.card}>
           {showCamera && <Image source={{ uri: 'http://192.168.43.173:5000/api/camera-feed' }} style={styles.cameraFeed} />}
           <Card.Actions>
@@ -276,12 +282,12 @@ const App = () => {
           />
           <Button title="Rename Song" onPress={renameSong} />
         </Card>
+        <AudioUpload/>
         <Card style={styles.card}>
           <Button title="Start Audio Detection" onPress={startAudioDetection} />
           <Button title="Stop Audio Detection" onPress={stopAudioDetection} />
         </Card>
-        <AudioUpload />
-        <GenerateAndUpload />
+        <GenerateAndUpload/>
       </View>
     </PaperProvider>
   );
