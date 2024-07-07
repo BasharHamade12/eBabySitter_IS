@@ -278,7 +278,7 @@ def detect_audio():
     FORMAT = pyaudio.paInt16
     CHANNELS = 1
     RATE = 44100
-    THRESHOLD = 200
+    THRESHOLD = 2500
 
     audio = pyaudio.PyAudio()
     stream = audio.open(format=FORMAT, channels=CHANNELS,
