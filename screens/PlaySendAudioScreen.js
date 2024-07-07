@@ -25,7 +25,7 @@ const PlaySendAudio = () => {
 
   const fetchSongs = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/list-songs');
+      const response = await fetch('http://192.168.43.173:5000/api/list-songs');
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
@@ -57,7 +57,7 @@ const PlaySendAudio = () => {
 
   const playSong = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/play-song', {
+      const response = await fetch('http://192.168.43.173:5000/api/play-song', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -77,7 +77,7 @@ const PlaySendAudio = () => {
 
   const stopSong = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/stop-song', {
+      const response = await fetch('http://192.168.43.173:5000/api/stop-song', {
         method: 'POST',
       });
       if (!response.ok) {
@@ -91,7 +91,7 @@ const PlaySendAudio = () => {
 
   const deleteSong = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/delete-song', {
+      const response = await fetch('http://192.168.43.173:5000/api/delete-song', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -111,7 +111,7 @@ const PlaySendAudio = () => {
 
   const renameSong = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/rename-song', {
+      const response = await fetch('http://192.168.43.173:5000/api/rename-song', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -158,7 +158,7 @@ const PlaySendAudio = () => {
         name: selectedFile.name,
       });
 
-      const response = await fetch('http://localhost:5000/upload', {
+      const response = await fetch('http://192.168.43.173:5000/upload', {
         method: 'POST',
         body: formData,
         headers: {

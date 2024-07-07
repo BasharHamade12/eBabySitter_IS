@@ -22,7 +22,7 @@ const AudioFileInput = () => {
     const formData = new FormData();
     formData.append('file', selectedFile);
 
-    fetch('http://localhost:5000/save', {
+    fetch('http://192.168.43.173:5000/save', {
       method: 'POST',
       body: formData,
     })

@@ -42,7 +42,7 @@ const RecordAndUpload = () => {
                     console.log('Base64 String:', base64String);
     
                     // Send the Base64 string to Flask server
-                    const response = await fetch('http://localhost:5000/upload-audio', {
+                    const response = await fetch('http://192.168.43.173:5000/upload-audio', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -93,7 +93,7 @@ const RecordAndUpload = () => {
           reader.onloadend = async () => {
             const base64String = reader.result.split(',')[1];
     
-            const response = await axios.post('http://localhost:5000/upload', { audio: base64String }, {
+            const response = await axios.post('http://192.168.43.173:5000/upload', { audio: base64String }, {
               headers: {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'

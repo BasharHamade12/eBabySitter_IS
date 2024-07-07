@@ -26,6 +26,7 @@ app.post('/api/send-email', async (req, res) => {
     const { to, subject, text } = req.body;
     const currentTime = Date.now();
     const cooldownTime = 2 * 60 * 1000;
+    face_found = true;
 
     if (currentTime - lastEmailSentTime < cooldownTime) {
         return res.status(429).send({ error: 'Email cooldown period has not passed yet. Please wait.' });
@@ -50,7 +51,6 @@ app.post('/api/send-email', async (req, res) => {
         await transporter.sendMail(mailOptions);
         lastEmailSentTime = currentTime;
         res.status(200).send({ message: 'Email sent successfully' });
-        face_found = true;
     } catch (error) {
         console.error('Error sending email:', error);
         res.status(500).send({ error: 'Failed to send email' });

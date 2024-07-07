@@ -1,23 +1,28 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Image, StyleSheet, Button, Picker, Text, TextInput } from 'react-native';
+import { View, Image, StyleSheet, Button, Picker, Text, TextInput, TouchableOpacity } from 'react-native';
 import { Provider as PaperProvider, Appbar, Card } from 'react-native-paper';
-import AudioUpload from './AudioUpload';
-import GenerateAndUpload from './GenerateAndUpload';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const App = () => {
   const [showCamera, setShowCamera] = useState(false);
   const [audioContext, setAudioContext] = useState(null);
   const [audioChunks, setAudioChunks] = useState([]);
-  const [songs, setSongs] = useState([]);
-  const [selectedSong, setSelectedSong] = useState('');
-  const [newSongName, setNewSongName] = useState('');
   const [faceStatus, setFaceStatus] = useState(true);
   const timeoutRef = useRef(null);
-  const socket = useRef(null);
+  const [dateTime, setDateTime] = useState(new Date());
+  const [listenAudio, setListenAudio] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDateTime(new Date());
+    }, 1000);
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
-      await fetchSongs();
       const interval = setInterval(async () => {
         try {
           const response = await fetch('http://localhost:3000/api/face-status');
@@ -49,20 +54,6 @@ const App = () => {
     fetchData();
     return () => {};
   }, [faceStatus]);
-
-  const fetchSongs = async () => {
-    try {
-      const response = await fetch('http://192.168.43.173:5000/api/list-songs');
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const data = await response.json();
-      setSongs(data.songs);
-      setSelectedSong(data.songs[0]);
-    } catch (error) {
-      console.error('Error fetching songs:', error);
-    }
-  };
   
   const sendEmailAlert = async () => {
     try {
@@ -81,7 +72,6 @@ const App = () => {
       if (!response.ok) {
         throw new Error('Failed to send email');
       }
-      Alert.alert('Email Alert Sent', 'An email alert has been sent to the user.');
     } catch (error) {
       console.error('Error sending email:', error);
     }
@@ -125,83 +115,23 @@ const App = () => {
   };
 
   const toggleCameraOff = async () => {
-    setShowCamera(false);
-  };
-
-  const playSong = async () => {
     try {
-      const response = await fetch('http://192.168.43.173:5000/api/play-song', {
+      const response = await fetch('http://192.168.43.173:5000/api/turn-off-camera', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ song: selectedSong }), 
-        mode: 'cors'
       });
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
-      const data = await response.json();
-      console.log(data.message);
-    } catch (error) {
-      console.error('Error playing song:', error);
+      setShowCamera(false);
+    }
+    catch (error) {
+      console.error('Error turning off camera:', error);
     }
   };
 
-  const stopSong = async () => {
-    try {
-      const response = await fetch('http://192.168.43.173:5000/api/stop-song', {
-        method: 'POST',
-      });
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      console.log('Song stopped');
-    } catch (error) {
-      console.error('Error stopping song:', error);
-    }
-  };
-
-  const deleteSong = async () => {
-    try {
-      const response = await fetch('http://192.168.43.173:5000/api/delete-song', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ song: selectedSong }),
-      });
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const data = await response.json();
-      console.log(data.message);
-      await fetchSongs(); // Refresh song list
-    } catch (error) {
-      console.error('Error deleting song:', error);
-    }
-  };
-
-  const renameSong = async () => {
-    try {
-      const response = await fetch('http://192.168.43.173:5000/api/rename-song', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ oldName: selectedSong, newName: newSongName }),
-      });
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const data = await response.json();
-      console.log(data.message);
-      await fetchSongs(); // Refresh song list
-    } catch (error) {
-      console.error('Error renaming song:', error);
-    }
-  };
-  
   const startAudioDetection = async () => {
     try {
       const response = await fetch('http://192.168.43.173:5000/api/start-audio-detection', {
@@ -213,9 +143,9 @@ const App = () => {
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
+      setListenAudio(true);
       const data = await response.json();
       console.log(data.message);
-      Alert.alert('Audio Detection', data.message);
     } catch (error) {
       console.error('Error starting audio detection:', error);
     }
@@ -232,9 +162,9 @@ const App = () => {
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
+      setListenAudio(false);
       const data = await response.json();
       console.log(data.message);
-      Alert.alert('Audio Detection', data.message);
     } catch (error) {
       console.error('Error stopping audio detection:', error);
     }
@@ -242,53 +172,45 @@ const App = () => {
 
   return (
     <PaperProvider>
-      <View style={styles.container}>
-        <Appbar.Header>
-          <Appbar.Content title="eBabySitter" />
-        </Appbar.Header> 
-            <View style={styles.titleContainer}>
-        <Image
-          source={{ uri: 'Capture.png' }} // Replace with your logo URL or local image
-          style={styles.logo}
-        />
-        <Text style={styles.title}>eBabySitter</Text>
-      </View>
-        <Card style={styles.card}>
-          {showCamera && <Image source={{ uri: 'http://192.168.43.173:5000/api/camera-feed' }} style={styles.cameraFeed} />}
-          <Card.Actions>
-            <Button title="Turn On Camera" onPress={toggleCameraOn} disabled={showCamera} />
-            <Button title="Turn Off Camera" onPress={toggleCameraOff} disabled={!showCamera} />
-          </Card.Actions>
-        </Card>
-        <Card style={styles.card}>
-          <Picker
-            selectedValue={selectedSong}
-            onValueChange={(itemValue) => setSelectedSong(itemValue)}
-          >
-            {songs.map((song, index) => (
-              <Picker.Item key={index} label={song} value={song} />
-            ))}
-          </Picker>
-          <Card.Actions>
-            <Button title="Play Selected Song" onPress={playSong} />
-            <Button title="Stop Song" onPress={stopSong} />
-            <Button title="Delete Song" onPress={deleteSong} />
-          </Card.Actions>
-          <TextInput
-            style={styles.input}
-            placeholder="New song name"
-            value={newSongName}
-            onChangeText={setNewSongName}
+      <LinearGradient
+        colors={['#5f5c95', '#FFFFFF', '#5f5c95']}
+        style={styles.container}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+      >
+        <View style={styles.titleContainer}>
+          <Image
+            source={{ uri: 'Capture.png' }} // Replace with your logo URL or local image
+            style={styles.logo}
           />
-          <Button title="Rename Song" onPress={renameSong} />
-        </Card>
-        <AudioUpload/>
-        <Card style={styles.card}>
-          <Button title="Start Audio Detection" onPress={startAudioDetection} />
-          <Button title="Stop Audio Detection" onPress={stopAudioDetection} />
-        </Card>
-        <GenerateAndUpload/>
-      </View>
+          <Text style={styles.title}>Monitoring</Text>
+        </View>
+        <View style={styles.cameraWrapper}>
+          <View style={styles.cameraHeader}>
+            <Text style={styles.dateTimeText}>{dateTime.toLocaleString()}</Text>
+          </View>
+          {showCamera && <Image source={{ uri: 'http://192.168.43.173:5000/api/camera-feed' }} style={styles.cameraFeed} />}
+          <View style={styles.cameraFooter}>
+            <Text style={styles.liveText}>
+              Live <Text style={styles.redDot}>●</Text>
+            </Text>
+          </View>
+        </View>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.buttonLarge} onPress={toggleCameraOn} disabled={showCamera}>
+            <Text style={styles.buttonText}>Turn On Camera</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.buttonLarge} onPress={toggleCameraOff} disabled={!showCamera}>
+            <Text style={styles.buttonText}>Turn Off Camera</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.buttonLarge} onPress={startAudioDetection} disabled={listenAudio}>
+            <Text style={styles.buttonText}>Start Audio Detection</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.buttonLarge} onPress={stopAudioDetection} disabled={!listenAudio}>
+            <Text style={styles.buttonText}>Stop Audio Detection</Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
     </PaperProvider>
   );
 };
@@ -296,11 +218,6 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
-  },
-  cameraFeed: {
-    width: '100%',
-    height: 300,
   },
   card: {
     margin: 10,
@@ -312,6 +229,88 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 10,
     padding: 10,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+    marginTop: 20,
+  },
+  logo: {
+    width: 50,
+    height: 50,
+    marginRight: 10,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  cameraWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    margin: 20,
+    borderRadius: 10,
+    padding: 10,
+    position: 'relative',
+  },
+  cameraHeader: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    zIndex: 1,
+  },
+  dateTimeText: {
+    fontSize: 16,
+    color: '#000000',
+  },
+  cameraFeed: {
+    width: '100%',
+    height: 300,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'gray',
+  },
+  cameraFooter: {
+    position: 'absolute',
+    bottom: 10,
+    left: 10,
+    zIndex: 1,
+  },
+  liveText: {
+    fontSize: 16,
+    color: '#000000',
+  },
+  redDot: {
+    color: 'red',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 10,
+    marginBottom: 15,
+    backgroundColor: 'transparent',
+  },
+  buttonLarge: {
+    backgroundColor: 'transparent',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    width: '20%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    margin: 10,
+  },
+  buttonText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
 });
 

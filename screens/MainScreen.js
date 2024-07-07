@@ -29,7 +29,7 @@ function MainScreen({ navigation }) {
       <View style={styles.line} />
       <View style={styles.menu}>
         <View style={styles.row}>
-          <TouchableOpacity style={styles.buttonLarge} onPress={() => navigation.navigate('Monitoring')}>
+          <TouchableOpacity style={styles.buttonLarge} onPress={() => navigation.navigate('MainPage')}>
             <FontAwesomeIcon icon={faVideo} size={60} color="#FFFFFF" />
             <Text style={styles.buttonText}>LIVE Monitoring</Text>
           </TouchableOpacity>

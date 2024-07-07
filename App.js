@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MainScreen from './screens/MainScreen';
+import MainPage from './screens/MainPage';
 import MonitoringScreen from './screens/MonitoringScreen';
 import AuthScreen from './screens/AuthScreen';
 import LoginScreen from './screens/LoginScreen';
@@ -41,6 +42,7 @@ function App() {
       <Stack.Navigator initialRouteName={userEmail ? 'Main' : 'Auth'}>
         <Stack.Screen name="Auth" component={AuthScreen} />
         <Stack.Screen name="Main" component={MainScreen} />
+        <Stack.Screen name="MainPage" component={MainPage} />
         <Stack.Screen name="Monitoring" component={MonitoringScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Signup" component={SignUpScreen} />
